@@ -12,8 +12,9 @@ local Keys = {
 
 local Player          = nil
 local CruisedSpeed    = 0
-local CruisedSpeedKm  = 0
+local CruisedSpeedTransformed  = 0
 local VehicleVectorY  = 0
+local excludedVehicles = {14, 15, 16}
 
 ESX = nil
 
@@ -28,8 +29,17 @@ Citizen.CreateThread(function ()
   while true do
     Wait(0)
     if IsControlJustPressed(1, Keys['Y']) and IsDriver() then
-      Player = GetPlayerPed(-1)
-      TriggerCruiseControl()
+	  local found = false
+	  for _v, v in ipairs(excludedVehicles) do
+		if v == GetVehicleClass(GetPlayersLastVehicle()) then
+		  found = true
+		  break
+		end
+	   end
+	   if not found then
+		Player = GetPlayerPed(-1)
+		TriggerCruiseControl()
+	    end
     end
   end
 end)
@@ -38,9 +48,13 @@ function TriggerCruiseControl ()
   if CruisedSpeed == 0 and IsDriving() then
     if GetVehiculeSpeed() > 0 then
       CruisedSpeed = GetVehiculeSpeed()
-      CruisedSpeedKm = TransformToKm(CruisedSpeed)
-
-      ESX.ShowNotification(_U('activated') .. ': ~b~ ' .. CruisedSpeedKm .. ' km/h')
+	  if Config.Unit == 'kmh' then
+		CruisedSpeedTransformed = TransformToKm(CruisedSpeed)
+		ESX.ShowNotification(_U('activated') .. ': ~b~ ' .. CruisedSpeedTransformed .. ' km/h')
+	  else
+	    CruisedSpeedTransformed = TransformToMph(CruisedSpeed)
+		ESX.ShowNotification(_U('activated') .. ': ~b~ ' .. CruisedSpeedTransformed .. ' mph')
+	  end
 
       Citizen.CreateThread(function ()
         while CruisedSpeed > 0 and IsInVehicle() == Player do
@@ -59,7 +73,11 @@ function TriggerCruiseControl ()
 
           if IsControlJustPressed(1, Keys['Y']) then
             CruisedSpeed = GetVehiculeSpeed()
-            CruisedSpeedKm = TransformToKm(CruisedSpeed)
+			if Config.Unit == 'kmh' then
+             CruisedSpeedTransformed = TransformToKm(CruisedSpeed)
+			else 
+			 CruisedSpeedTransformed = TransformToMph(CruisedSpeed)
+			end
           end
 
           if IsControlJustPressed(2, 72) then
@@ -101,3 +119,7 @@ end
 function TransformToKm (speed)
   return math.floor(speed * 3.6 + 0.5)
 end
+
+function TransformToMph (speed)
+  return math.floor((speed / 4 ) * 9)
+ end

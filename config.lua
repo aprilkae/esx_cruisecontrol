@@ -1,2 +1,3 @@
 Config        = {}
-Config.Locale = 'fr'
+Config.Unit   = 'mph'
+Config.Locale = 'en'
